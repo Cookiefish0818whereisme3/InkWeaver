@@ -1,0 +1,1603 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>执笔</title>
+<style>
+/* ===== CSS Variables ===== */
+:root {
+  --bg: #f1f5f9;
+  --surface: #ffffff;
+  --sidebar: #0b1929;
+  --sidebar-hover: #132f4c;
+  --sidebar-active: #132f4c;
+  --accent: #3b82f6;
+  --accent-light: #eff6ff;
+  --accent-dark: #2563eb;
+  --text: #0f172a;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+  --border: #e2e8f0;
+  --border-light: #f1f5f9;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.05);
+  --shadow: 0 1px 3px rgba(0,0,0,.1),0 1px 2px rgba(0,0,0,.06);
+  --shadow-md: 0 4px 6px rgba(0,0,0,.07),0 2px 4px rgba(0,0,0,.06);
+  --shadow-lg: 0 10px 15px rgba(0,0,0,.1),0 4px 6px rgba(0,0,0,.05);
+  --radius: 8px;
+  --radius-sm: 4px;
+  --radius-lg: 12px;
+  --sidebar-w: 220px;
+  --font: -apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans SC",sans-serif;
+  --mono: "SF Mono","Fira Code","Cascadia Code",monospace;
+}
+
+/* ===== Reset & Base ===== */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{font-family:var(--font);font-size:14px;color:var(--text);background:var(--bg);line-height:1.5}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:#94a3b8}
+input,textarea,select,button{font-family:inherit;font-size:inherit}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(59,130,246,.15)}
+button{cursor:pointer;border:none;background:none}
+
+/* ===== Layout ===== */
+#app{display:flex;height:100vh}
+#sidebar{width:var(--sidebar-w);background:var(--sidebar);color:#fff;display:flex;flex-direction:column;flex-shrink:0;user-select:none;z-index:10}
+#main{flex:1;overflow-y:auto;overflow-x:hidden;background:var(--bg)}
+
+/* ===== Sidebar ===== */
+.side-logo{padding:20px 20px 16px;font-size:22px;font-weight:700;letter-spacing:.05em;color:#fff;border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:8px}
+.side-logo .icon{width:28px;height:28px;background:var(--accent);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-size:15px}
+.side-nav{flex:1;padding:12px 0;display:flex;flex-direction:column;gap:2px}
+.side-section{padding:8px 20px 4px;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.35);margin-top:4px}
+.side-item{padding:10px 20px;display:flex;align-items:center;gap:10px;color:rgba(255,255,255,.65);transition:all .15s;cursor:pointer;border-left:3px solid transparent;font-size:14px}
+.side-item:hover{color:#fff;background:rgba(255,255,255,.04)}
+.side-item.active{color:#fff;background:var(--sidebar-active);border-left-color:var(--accent)}
+.side-item .si-icon{font-size:16px;width:20px;text-align:center;opacity:.8}
+.side-actions{padding:12px 16px;border-top:1px solid rgba(255,255,255,.08);display:flex;flex-direction:column;gap:4px}
+.side-actions .side-item{padding:8px 12px;font-size:13px;border-left:none;border-radius:6px}
+
+/* ===== Header ===== */
+#panel-header{padding:20px 28px 0;display:flex;align-items:center;justify-content:space-between}
+#panel-header h2{font-size:20px;font-weight:700;color:var(--text)}
+#panel-header .actions{display:flex;gap:8px}
+
+/* ===== Content ===== */
+#panel-content{padding:20px 28px 40px}
+
+/* ===== Buttons ===== */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--radius);font-weight:500;transition:all .15s;font-size:13px;white-space:nowrap}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:var(--accent-dark)}
+.btn-secondary{background:var(--surface);color:var(--text);border:1px solid var(--border)}
+.btn-secondary:hover{background:var(--bg)}
+.btn-danger{background:#fee2e2;color:#dc2626}
+.btn-danger:hover{background:#fecaca}
+.btn-ghost{color:var(--text-secondary)}
+.btn-ghost:hover{background:var(--bg)}
+.btn-sm{padding:4px 10px;font-size:12px}
+.btn-xs{padding:2px 8px;font-size:11px;border-radius:var(--radius-sm)}
+.btn-icon{width:32px;height:32px;padding:0;display:inline-flex;align-items:center;justify-content:center;border-radius:var(--radius)}
+
+/* ===== Cards ===== */
+.card{background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);border:1px solid var(--border);padding:20px}
+.card-header{font-weight:600;font-size:15px;margin-bottom:12px;color:var(--text)}
+
+/* ===== Form ===== */
+.form-group{margin-bottom:14px}
+.form-label{display:block;font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em}
+.form-input,.form-textarea,.form-select{width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);transition:border-color .15s}
+.form-textarea{resize:vertical;min-height:80px}
+
+/* ===== Badges & Tags ===== */
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;letter-spacing:.02em;white-space:nowrap}
+.badge-protag{background:#fef3c7;color:#92400e}
+.badge-anta{background:#fee2e2;color:#991b1b}
+.badge-support{background:#dbeafe;color:#1e40af}
+.badge-minor{background:#f1f5f9;color:#475569}
+.tag{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;background:var(--accent-light);color:var(--accent-dark);border-radius:12px;font-size:12px;font-weight:500}
+.tag .tag-x{cursor:pointer;font-size:14px;line-height:1;opacity:.6}
+.tag .tag-x:hover{opacity:1}
+.status-draft{background:#f1f5f9;color:#64748b}
+.status-outline{background:#fef9c3;color:#a16207}
+.status-done{background:#dcfce7;color:#166534}
+
+/* ===== Modals ===== */
+.modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,23,42,.5);z-index:100;display:flex;align-items:center;justify-content:center;animation:fadeIn .15s}
+.modal{background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);width:90%;max-width:560px;max-height:85vh;overflow-y:auto;animation:slideUp .2s}
+.modal-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;font-weight:600;font-size:16px}
+.modal-body{padding:20px}
+.modal-footer{padding:12px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+/* ===== Toast ===== */
+#toasts{position:fixed;bottom:24px;right:24px;z-index:200;display:flex;flex-direction:column;gap:8px}
+.toast{padding:10px 16px;background:var(--text);color:#fff;border-radius:var(--radius);font-size:13px;box-shadow:var(--shadow-lg);animation:slideUp .2s;max-width:320px}
+
+/* ===== Overview ===== */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px}
+.stat-card{background:var(--surface);border-radius:var(--radius-lg);padding:18px 20px;box-shadow:var(--shadow-sm);border:1px solid var(--border);cursor:pointer;transition:all .15s}
+.stat-card:hover{box-shadow:var(--shadow-md);transform:translateY(-1px)}
+.stat-card .stat-num{font-size:32px;font-weight:700;color:var(--accent)}
+.stat-card .stat-label{font-size:12px;color:var(--text-secondary);margin-top:4px}
+.progress-bar{height:6px;background:var(--border-light);border-radius:3px;overflow:hidden;margin-top:8px}
+.progress-bar .fill{height:100%;background:var(--accent);border-radius:3px;transition:width .3s}
+
+/* ===== Character Panel ===== */
+.char-layout{display:flex;gap:20px;height:calc(100vh - 140px)}
+.char-list{width:220px;flex-shrink:0;overflow-y:auto;background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border);padding:8px}
+.char-list-item{padding:10px 12px;border-radius:var(--radius);cursor:pointer;display:flex;align-items:center;gap:10px;transition:all .12s;margin-bottom:2px}
+.char-list-item:hover{background:var(--bg)}
+.char-list-item.active{background:var(--accent-light)}
+.char-list-item .cli-avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0}
+.char-list-item .cli-info{overflow:hidden}
+.char-list-item .cli-name{font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.char-list-item .cli-role{font-size:11px;color:var(--text-muted)}
+.char-detail{flex:1;overflow-y:auto;background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border);padding:24px}
+.add-char-btn{width:100%;padding:8px;text-align:center;color:var(--accent);border:2px dashed var(--border);border-radius:var(--radius);font-weight:500;font-size:13px;cursor:pointer;transition:all .15s}
+.add-char-btn:hover{border-color:var(--accent);background:var(--accent-light)}
+
+/* ===== Graph Panel ===== */
+#graph-container{position:relative;height:calc(100vh - 140px);background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border);overflow:hidden}
+#graph-canvas{width:100%;height:100%}
+.graph-toolbar{position:absolute;top:12px;right:12px;display:flex;flex-direction:column;gap:4px;background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:4px;z-index:5}
+.graph-toolbar button{width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:var(--radius-sm);font-size:14px;color:var(--text-secondary)}
+.graph-toolbar button:hover{background:var(--bg);color:var(--text)}
+.graph-minimap{position:absolute;bottom:12px;left:12px;border-radius:var(--radius);box-shadow:var(--shadow);border:2px solid var(--border);z-index:5;background:#f8fafc}
+.graph-legend{position:absolute;top:12px;left:12px;background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:10px 14px;font-size:12px;z-index:5}
+
+/* ===== Worldbuilding ===== */
+.wb-subtabs{display:flex;gap:0;margin-bottom:20px;background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);overflow:hidden}
+.wb-subtab{padding:8px 20px;font-size:13px;font-weight:500;color:var(--text-secondary);cursor:pointer;transition:all .15s;border-right:1px solid var(--border)}
+.wb-subtab:last-child{border-right:none}
+.wb-subtab:hover{color:var(--text);background:var(--bg)}
+.wb-subtab.active{color:var(--accent);background:var(--accent-light)}
+.location-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.location-card{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border);padding:16px;cursor:pointer;transition:all .15s}
+.location-card:hover{box-shadow:var(--shadow-md)}
+.location-card .loc-name{font-weight:600;margin-bottom:4px}
+.location-card .loc-type{font-size:11px;color:var(--text-muted)}
+.location-card .loc-desc{font-size:12px;color:var(--text-secondary);margin-top:6px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.add-card{border:2px dashed var(--border);display:flex;align-items:center;justify-content:center;min-height:100px;color:var(--accent);font-weight:500}
+.add-card:hover{border-color:var(--accent);background:var(--accent-light)}
+
+/* Multi-track Horizontal Timeline */
+.timeline-wrap{overflow-x:auto;overflow-y:auto;max-height:calc(100vh - 240px);background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border)}
+.timeline-h{position:relative;min-width:100%}
+.timeline-axis{position:sticky;top:0;z-index:5;background:var(--surface);border-bottom:2px solid var(--border);padding:8px 0;display:flex;min-width:fit-content}
+.timeline-axis .tick{flex-shrink:0;width:120px;text-align:center;font-size:11px;color:var(--text-muted);font-weight:600;border-right:1px solid var(--border-light);padding:4px 0}
+.timeline-tracks{}
+.timeline-track{display:flex;align-items:flex-start;min-height:80px;border-bottom:1px solid var(--border-light);position:relative}
+.timeline-track-label{width:100px;flex-shrink:0;padding:8px 10px;font-size:12px;font-weight:600;color:var(--text-secondary);background:var(--bg);position:sticky;left:0;z-index:3;display:flex;align-items:center;border-right:1px solid var(--border);min-height:80px}
+.timeline-track-events{flex:1;position:relative;display:flex;min-height:80px;padding:8px 0}
+.tl-event{position:absolute;top:8px;background:var(--surface);border:1px solid var(--accent);border-radius:var(--radius);padding:8px 12px;width:130px;cursor:pointer;font-size:12px;box-shadow:var(--shadow-sm);transition:all .15s;z-index:2;overflow:hidden}
+.tl-event:hover{box-shadow:var(--shadow-md);z-index:4;transform:translateY(-2px)}
+.tl-event .tl-name{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tl-event .tl-meta{font-size:10px;color:var(--text-muted);margin-top:2px}
+.tl-event:hover .tl-desc{display:block}
+.tl-event .tl-desc{display:none;font-size:11px;color:var(--text-secondary);margin-top:4px;line-height:1.4}
+
+.rules-list{display:flex;flex-direction:column;gap:8px}
+.rule-cat{font-weight:600;font-size:13px;color:var(--text-secondary);padding:8px 0 4px;text-transform:uppercase;letter-spacing:.05em}
+.rule-item{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border)}
+.rule-item .rule-header{padding:12px 16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-weight:500}
+.rule-item .rule-body{padding:0 16px 14px;font-size:13px;color:var(--text-secondary);display:none}
+.rule-item.open .rule-body{display:block}
+
+/* ===== Plot Panel ===== */
+.plot-tree{padding-left:0}
+.act-block{margin-bottom:16px}
+.act-header{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);padding:12px 16px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px}
+.act-header .expand-icon{transition:transform .2s;font-size:11px;color:var(--text-muted)}
+.act-header.collapsed .expand-icon{transform:rotate(-90deg)}
+.act-children{margin-left:24px;margin-top:4px}
+.act-header.collapsed+.act-children{display:none}
+.chapter-block{margin-bottom:4px}
+.chapter-header{padding:10px 14px;font-weight:500;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px;border-radius:var(--radius-sm);color:var(--text-secondary)}
+.chapter-header:hover{background:rgba(0,0,0,.02)}
+.chapter-scenes{margin-left:20px}
+.chapter-header.collapsed+.chapter-scenes{display:none}
+.chapter-header .expand-icon{transition:transform .2s;font-size:10px}
+.chapter-header.collapsed .expand-icon{transform:rotate(-90deg)}
+.scene-card{display:flex;align-items:center;gap:10px;padding:8px 12px;margin:2px 0;border-radius:var(--radius-sm);background:var(--surface);border:1px solid var(--border);cursor:pointer;transition:all .12s;font-size:13px}
+.scene-card:hover{box-shadow:var(--shadow-sm)}
+.scene-card .sc-status{flex-shrink:0}
+.scene-card .sc-title{flex:1;font-weight:500}
+.scene-card .sc-meta{font-size:11px;color:var(--text-muted)}
+.empty-scene{color:var(--text-muted);font-style:italic;font-size:12px;padding:6px 12px}
+
+/* ===== Slide Panel ===== */
+.slide-panel{position:fixed;top:0;right:0;width:420px;height:100%;background:var(--surface);box-shadow:var(--shadow-lg);z-index:90;overflow-y:auto;animation:slideRight .2s;padding:24px}
+.slide-panel .close-btn{position:absolute;top:12px;right:12px}
+@keyframes slideRight{from{transform:translateX(100%)}to{transform:translateX(0)}}
+
+/* ===== Themes & Notes ===== */
+.notes-layout{display:flex;flex-direction:column;gap:20px}
+.theme-chips{display:flex;flex-wrap:wrap;gap:8px}
+.note-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.note-card{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border);padding:16px;cursor:pointer;transition:all .15s}
+.note-card:hover{box-shadow:var(--shadow-md)}
+.note-card .note-title{font-weight:600;margin-bottom:4px}
+.note-card .note-preview{font-size:12px;color:var(--text-secondary);overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical}
+.note-card .note-meta{font-size:11px;color:var(--text-muted);margin-top:8px;display:flex;justify-content:space-between}
+.note-card.pinned{border-color:var(--accent);background:var(--accent-light)}
+.search-bar{width:100%;padding:8px 14px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);font-size:13px}
+
+/* ===== Motif Table ===== */
+.motif-table{width:100%;border-collapse:collapse;font-size:13px}
+.motif-table th{text-align:left;padding:8px 12px;font-size:11px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border)}
+.motif-table td{padding:8px 12px;border-bottom:1px solid var(--border-light)}
+
+/* ===== Empty State ===== */
+.empty-state{text-align:center;padding:40px 20px;color:var(--text-muted)}
+.empty-state .empty-icon{font-size:48px;margin-bottom:12px;opacity:.5}
+.empty-state .empty-title{font-weight:600;color:var(--text-secondary);margin-bottom:4px}
+
+/* ===== Utilities ===== */
+.flex{display:flex}
+.flex-1{flex:1}
+.gap-8{gap:8px}
+.gap-12{gap:12px}
+.gap-16{gap:16px}
+.mb-12{margin-bottom:12px}
+.mb-16{margin-bottom:16px}
+.mb-20{margin-bottom:20px}
+.mt-8{margin-top:8px}
+.text-secondary{color:var(--text-secondary)}
+.text-muted{color:var(--text-muted)}
+.text-sm{font-size:12px}
+.font-bold{font-weight:600}
+</style>
+</head>
+<body>
+
+<div id="app">
+<!-- Sidebar -->
+<nav id="sidebar">
+  <div class="side-logo"><div class="icon">✍</div>执笔</div>
+  <div class="side-nav">
+    <div class="side-section">创作</div>
+    <div class="side-item active" data-panel="overview"><span class="si-icon">📊</span>项目概览</div>
+    <div class="side-item" data-panel="characters"><span class="si-icon">👤</span>人物管理</div>
+    <div class="side-item" data-panel="graph"><span class="si-icon">🔗</span>关系图谱</div>
+    <div class="side-item" data-panel="worldbuilding"><span class="si-icon">🌍</span>世界观</div>
+    <div class="side-item" data-panel="plot"><span class="si-icon">📋</span>情节大纲</div>
+    <div class="side-item" data-panel="themes"><span class="si-icon">💡</span>主题笔记</div>
+  </div>
+  <div class="side-actions">
+    <div class="side-item" id="btn-save"><span class="si-icon">💾</span>保存</div>
+    <div class="side-item" id="btn-open"><span class="si-icon">📂</span>打开项目</div>
+    <div class="side-item" id="btn-export"><span class="si-icon">⬇</span>导出 JSON</div>
+    <div class="side-item" id="btn-import"><span class="si-icon">⬆</span>导入 JSON</div>
+  </div>
+</nav>
+
+<!-- Main -->
+<div id="main">
+  <div id="panel-header"><h2 id="panel-title">项目概览</h2><div class="actions" id="panel-actions"></div></div>
+  <div id="panel-content"></div>
+</div>
+</div>
+
+<!-- Slide panel (scene editor, etc.) -->
+<div id="slide-panel" class="slide-panel" style="display:none"></div>
+<!-- Modal overlay -->
+<div id="modal-overlay" class="modal-overlay" style="display:none"><div class="modal" id="modal-box"></div></div>
+<!-- Toasts -->
+<div id="toasts"></div>
+<!-- Hidden file input -->
+<input type="file" id="file-input" accept=".json" style="display:none">
+
+<script>
+// ======================================================================
+// 执笔 — 单文件创作辅助工具
+// ======================================================================
+
+// ========================== STATE ======================================
+const STATE = {
+  project: null,
+  activePanel: 'overview',
+  activeCharId: null,
+  activeWbTab: 'locations',
+  slideCallback: null,
+  graphEngine: null,
+  locationMapEngine: null
+};
+
+// ========================== UTILS ======================================
+const $ = (s, p) => (p||document).querySelector(s);
+const $$ = (s, p) => Array.from((p||document).querySelectorAll(s));
+const genId = (prefix) => prefix + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+const escapeHtml = s => { const d=document.createElement('div'); d.textContent=s; return d.innerHTML; };
+
+function fmtDate(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  const pad = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+// ========================== TOAST ======================================
+function toast(msg) {
+  const el = document.createElement('div'); el.className='toast'; el.textContent=msg;
+  $('#toasts').appendChild(el);
+  setTimeout(() => { el.style.opacity='0'; el.style.transition='opacity .3s'; setTimeout(()=>el.remove(),300); }, 2500);
+}
+
+// ========================== MODAL ======================================
+function showModal(title, bodyHtml, footerHtml) {
+  $('#modal-box').innerHTML = `
+    <div class="modal-header">${escapeHtml(title)}<button class="btn-icon btn-ghost" onclick="closeModal()">✕</button></div>
+    <div class="modal-body">${bodyHtml}</div>
+    ${footerHtml ? `<div class="modal-footer">${footerHtml}</div>` : ''}`;
+  $('#modal-overlay').style.display = 'flex';
+}
+function closeModal() { $('#modal-overlay').style.display = 'none'; }
+$('#modal-overlay').addEventListener('click', e => { if (e.target === $('#modal-overlay')) closeModal(); });
+
+// ========================== CONFIRM ====================================
+function confirmDialog(msg) {
+  return new Promise(resolve => {
+    showModal('确认操作', `<p>${escapeHtml(msg)}</p>`,
+      `<button class="btn btn-secondary" onclick="closeModal();window._confirmResolve(false)">取消</button>
+       <button class="btn btn-danger" onclick="closeModal();window._confirmResolve(true)">确认</button>`);
+    window._confirmResolve = resolve;
+  });
+}
+
+// ========================== DATA LAYER =================================
+function newProject() {
+  return {
+    version: 1,
+    meta: { title: '未命名项目', author: '', createdAt: new Date().toISOString(), modifiedAt: new Date().toISOString() },
+    characters: [],
+    worldbuilding: { locations: [], timeline: [], rules: [] },
+    plot: { acts: [] },
+    themes: { centralThemes: [], motifs: [], notes: [] },
+    _graphPositions: {},
+    _locationPositions: {},
+    _locationShapes: {}
+  };
+}
+
+function emptyProject() {
+  STATE.project = newProject();
+  STATE.activeCharId = null;
+  STATE.activeWbTab = 'locations';
+}
+
+// Add default act/chapter structure
+function ensurePlotStructure() {
+  if (!STATE.project.plot.acts || STATE.project.plot.acts.length === 0) {
+    STATE.project.plot.acts = [
+      { id: genId('act'), title: '第一幕', order: 0, chapters: [
+        { id: genId('ch'), title: '第一章', order: 0, scenes: [] }
+      ]}
+    ];
+  }
+}
+
+// ========================== STORAGE ====================================
+function storageKey(id) { return 'zhibi_project_' + id; }
+function listProjects() {
+  try { return JSON.parse(localStorage.getItem('zhibi_index') || '[]'); } catch(e) { return []; }
+}
+function saveProject() {
+  if (!STATE.project) return;
+  STATE.project.meta.modifiedAt = new Date().toISOString();
+  // Ensure project has an ID
+  if (!STATE.project.meta._id) STATE.project.meta._id = genId('proj');
+  const id = STATE.project.meta._id;
+  const json = JSON.stringify(STATE.project);
+  // Check size
+  if (json.length > 4.5 * 1024 * 1024) { toast('⚠ 项目数据接近存储上限，请导出备份'); }
+  try {
+    localStorage.setItem(storageKey(id), json);
+    // Update index
+    const idx = listProjects();
+    const existing = idx.findIndex(p => p.id === id);
+    const entry = { id, title: STATE.project.meta.title, author: STATE.project.meta.author, createdAt: STATE.project.meta.createdAt, modifiedAt: STATE.project.meta.modifiedAt };
+    if (existing >= 0) idx[existing] = entry; else idx.push(entry);
+    localStorage.setItem('zhibi_index', JSON.stringify(idx));
+    localStorage.setItem('zhibi_active', id);
+    toast('已保存');
+  } catch(e) {
+    toast('保存失败: ' + e.message);
+  }
+}
+function loadProject(id) {
+  try {
+    const json = localStorage.getItem(storageKey(id));
+    if (!json) { toast('项目不存在'); return false; }
+    STATE.project = JSON.parse(json);
+    STATE.activeCharId = null;
+    STATE.activeWbTab = 'locations';
+    localStorage.setItem('zhibi_active', id);
+    ensurePlotStructure();
+    refreshAll();
+    return true;
+  } catch(e) { toast('加载失败: ' + e.message); return false; }
+}
+function deleteProject(id) {
+  localStorage.removeItem(storageKey(id));
+  const idx = listProjects().filter(p => p.id !== id);
+  localStorage.setItem('zhibi_index', JSON.stringify(idx));
+}
+function exportProject() {
+  if (!STATE.project) return;
+  const json = JSON.stringify(STATE.project, null, 2);
+  const blob = new Blob([json], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download=(STATE.project.meta.title||'project')+'.zhibi.json'; a.click();
+  URL.revokeObjectURL(url);
+  toast('已导出');
+}
+function importProject(file) {
+  const reader = new FileReader();
+  reader.onload = function() {
+    try {
+      const data = JSON.parse(reader.result);
+      if (!data.version || !data.meta || !data.characters) { toast('无效的项目文件'); return; }
+      data.meta._id = genId('proj');
+      data.meta.createdAt = new Date().toISOString();
+      data.meta.modifiedAt = new Date().toISOString();
+      STATE.project = data;
+      STATE.activeCharId = null;
+      STATE.activeWbTab = 'locations';
+      ensurePlotStructure();
+      saveProject();
+      refreshAll();
+      toast('导入成功');
+    } catch(e) { toast('文件解析失败'); }
+  };
+  reader.readAsText(file);
+}
+
+// ========================== REFRESH ALL ================================
+function refreshAll() {
+  switch(STATE.activePanel) {
+    case 'overview': renderOverview(); break;
+    case 'characters': renderCharacters(); break;
+    case 'graph': renderGraph(); break;
+    case 'worldbuilding': renderWorldBuilding(); break;
+    case 'plot': renderPlot(); break;
+    case 'themes': renderThemes(); break;
+  }
+}
+
+// ========================== PANEL SWITCHING ============================
+$$('.side-item[data-panel]').forEach(item => {
+  item.addEventListener('click', function() {
+    if (STATE.activePanel === this.dataset.panel) return;
+    STATE.activePanel = this.dataset.panel;
+    $$('.side-item[data-panel]').forEach(i => i.classList.remove('active'));
+    this.classList.add('active');
+    refreshAll();
+  });
+});
+
+// ========================== OVERVIEW ===================================
+function renderOverview() {
+  const p = STATE.project;
+  if (!p) return;
+  $('#panel-title').textContent = '项目概览';
+  $('#panel-actions').innerHTML = '';
+  const charCount = p.characters.length;
+  const locCount = p.worldbuilding.locations.length;
+  let sceneCount = 0, doneCount = 0;
+  (p.plot.acts||[]).forEach(a => (a.chapters||[]).forEach(ch => (ch.scenes||[]).forEach(sc => { sceneCount++; if (sc.status==='done') doneCount++; })));
+  const noteCount = p.themes.notes.length;
+  const progressPct = sceneCount > 0 ? Math.round(doneCount/sceneCount*100) : 0;
+
+  $('#panel-content').innerHTML = `
+    <div class="mb-20">
+      <div class="form-group"><label class="form-label">作品名称</label>
+        <input class="form-input" style="font-size:18px;font-weight:600" value="${escapeHtml(p.meta.title)}" onchange="STATE.project.meta.title=this.value" placeholder="输入作品名称"></div>
+      <div class="form-group"><label class="form-label">作者</label>
+        <input class="form-input" value="${escapeHtml(p.meta.author||'')}" onchange="STATE.project.meta.author=this.value" placeholder="作者署名"></div>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-card" onclick="STATE.activePanel='characters';$$('.side-item[data-panel]').forEach(i=>i.classList.remove('active'));$('.side-item[data-panel=characters]').classList.add('active');renderCharacters();">
+        <div class="stat-num">${charCount}</div><div class="stat-label">人物</div></div>
+      <div class="stat-card" onclick="STATE.activePanel='worldbuilding';$$('.side-item[data-panel]').forEach(i=>i.classList.remove('active'));$('.side-item[data-panel=worldbuilding]').classList.add('active');renderWorldBuilding();">
+        <div class="stat-num">${locCount}</div><div class="stat-label">地点</div></div>
+      <div class="stat-card" onclick="STATE.activePanel='plot';$$('.side-item[data-panel]').forEach(i=>i.classList.remove('active'));$('.side-item[data-panel=plot]').classList.add('active');renderPlot();">
+        <div class="stat-num">${sceneCount}</div><div class="stat-label">场景</div></div>
+      <div class="stat-card" onclick="STATE.activePanel='themes';$$('.side-item[data-panel]').forEach(i=>i.classList.remove('active'));$('.side-item[data-panel=themes]').classList.add('active');renderThemes();">
+        <div class="stat-num">${noteCount}</div><div class="stat-label">笔记</div></div>
+    </div>
+    <div class="card">
+      <div class="card-header">写作进度</div>
+      <div style="margin-bottom:6px;font-size:13px;color:var(--text-secondary)">已完成 ${doneCount}/${sceneCount} 场景</div>
+      <div class="progress-bar"><div class="fill" style="width:${progressPct}%"></div></div>
+    </div>
+    <div class="mt-8 text-sm text-muted">创建于 ${fmtDate(p.meta.createdAt)} · 最后修改 ${fmtDate(p.meta.modifiedAt)}</div>`;
+}
+
+// ========================== CHARACTERS =================================
+function renderCharacters() {
+  const p = STATE.project;
+  if (!p) return;
+  $('#panel-title').textContent = '人物管理';
+  $('#panel-actions').innerHTML = `<button class="btn btn-primary btn-sm" onclick="addCharacter()">+ 添加人物</button>`;
+
+  const chars = p.characters;
+  if (chars.length === 0) {
+    $('#panel-content').innerHTML = `<div class="char-layout"><div class="char-list"><button class="add-char-btn" onclick="addCharacter()">+ 添加第一个人物</button></div><div class="char-detail"><div class="empty-state"><div class="empty-icon">👤</div><div class="empty-title">尚未创建人物</div><div style="font-size:12px">点击左侧按钮开始添加</div></div></div></div>`;
+    return;
+  }
+
+  if (!STATE.activeCharId || !chars.find(c => c.id === STATE.activeCharId)) {
+    STATE.activeCharId = chars[0].id;
+  }
+  const active = chars.find(c => c.id === STATE.activeCharId);
+  const roleColors = { protagonist: '#f59e0b', antagonist: '#ef4444', supporting: '#3b82f6', minor: '#94a3b8' };
+  const roleLabels = { protagonist: '主角', antagonist: '反派', supporting: '配角', minor: '次要' };
+
+  const charListHtml = chars.map(c => `
+    <div class="char-list-item ${c.id===STATE.activeCharId?'active':''}" onclick="STATE.activeCharId='${c.id}';renderCharacters();">
+      <div class="cli-avatar" style="background:${roleColors[c.role]||'#94a3b8'}">${c.name.charAt(0)}</div>
+      <div class="cli-info"><div class="cli-name">${escapeHtml(c.name)}</div><div class="cli-role">${roleLabels[c.role]||c.role}</div></div>
+    </div>`).join('');
+
+  const rels = active.relationships || [];
+  const relHtml = rels.map(r => {
+    const target = chars.find(c => c.id === r.targetId);
+    const relTypeLabels = { family:'亲人', friend:'朋友', lover:'恋人', enemy:'仇敌', rival:'对手', colleague:'同事', other:'其他' };
+    return `<tr>
+      <td>${target ? escapeHtml(target.name) : '<span class="text-muted">(已删除)</span>'}</td>
+      <td><span class="badge badge-${r.type==='enemy'?'anta':r.type==='lover'?'anta':r.type==='family'?'support':'minor'}">${relTypeLabels[r.type]||r.type}</span></td>
+      <td>${escapeHtml(r.label||'')}</td>
+      <td><button class="btn btn-xs btn-danger" onclick="removeRelationship('${active.id}','${r.id}')">✕</button></td>
+    </tr>`;
+  }).join('');
+
+  const tagsHtml = (active.personalityTags||[]).map(t => `<span class="tag">${escapeHtml(t)}<span class="tag-x" onclick="removeTag('${active.id}','${escapeHtml(t)}')">×</span></span>`).join('');
+
+  $('#panel-content').innerHTML = `
+    <div class="char-layout">
+      <div class="char-list">
+        ${charListHtml}
+        <button class="add-char-btn" onclick="addCharacter()">+ 添加人物</button>
+      </div>
+      <div class="char-detail">
+        <div class="flex gap-16 mb-20">
+          <div class="form-group flex-1"><label class="form-label">姓名</label><input class="form-input" value="${escapeHtml(active.name)}" onchange="updateChar('${active.id}','name',this.value)"></div>
+          <div class="form-group" style="width:140px"><label class="form-label">角色</label>
+            <select class="form-select" onchange="updateChar('${active.id}','role',this.value)">
+              ${['protagonist','antagonist','supporting','minor'].map(r => `<option value="${r}" ${active.role===r?'selected':''}>${roleLabels[r]}</option>`).join('')}
+            </select></div>
+        </div>
+        <div class="flex gap-16 mb-20">
+          <div class="form-group" style="width:100px"><label class="form-label">年龄</label><input class="form-input" value="${escapeHtml(active.age||'')}" onchange="updateChar('${active.id}','age',this.value)" placeholder="—"></div>
+          <div class="form-group" style="width:120px"><label class="form-label">性别</label><input class="form-input" value="${escapeHtml(active.gender||'')}" onchange="updateChar('${active.id}','gender',this.value)" placeholder="—"></div>
+        </div>
+        <div class="form-group"><label class="form-label">性格标签</label>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">${tagsHtml||'<span class="text-muted text-sm">暂无标签</span>'}</div>
+          <div class="flex gap-8"><input class="form-input" id="tag-input" placeholder="输入标签后回车" onkeydown="if(event.key==='Enter'){addTag('${active.id}',this.value);this.value=''}"><button class="btn btn-sm btn-secondary" onclick="addTag('${active.id}',$('#tag-input').value);$('#tag-input').value=''">添加</button></div>
+        </div>
+        <div class="form-group"><label class="form-label">外貌</label><textarea class="form-textarea" onchange="updateChar('${active.id}','appearance',this.value)">${escapeHtml(active.appearance||'')}</textarea></div>
+        <div class="form-group"><label class="form-label">背景故事</label><textarea class="form-textarea" onchange="updateChar('${active.id}','backstory',this.value)">${escapeHtml(active.backstory||'')}</textarea></div>
+        <div class="form-group"><label class="form-label">动机</label><textarea class="form-textarea" onchange="updateChar('${active.id}','motivation',this.value)">${escapeHtml(active.motivation||'')}</textarea></div>
+        <div class="form-group"><label class="form-label">自由笔记</label><textarea class="form-textarea" onchange="updateChar('${active.id}','notes',this.value)">${escapeHtml(active.notes||'')}</textarea></div>
+
+        <div class="card mb-12"><div class="card-header">人物关系</div>
+          <table style="width:100%;font-size:13px"><thead><tr><th>关联人物</th><th>关系类型</th><th>描述</th><th></th></tr></thead>
+            <tbody>${relHtml||'<tr><td colspan="4" class="text-muted text-sm">暂无关系</td></tr>'}</tbody></table>
+          <button class="btn btn-sm btn-secondary mt-8" onclick="addRelationship('${active.id}')">+ 添加关系</button>
+        </div>
+        <button class="btn btn-danger btn-sm" onclick="deleteCharacter('${active.id}')">删除此人物</button>
+      </div>
+    </div>`;
+}
+
+function addCharacter() {
+  const c = { id: genId('c'), name: '新人物', role: 'supporting', age: '', gender: '', appearance: '', personalityTags: [], backstory: '', motivation: '', notes: '', relationships: [] };
+  STATE.project.characters.push(c);
+  STATE.activeCharId = c.id;
+  renderCharacters();
+}
+function updateChar(id, field, value) { const c = STATE.project.characters.find(x => x.id===id); if (c) c[field]=value; }
+function addTag(cid, val) { if (!val.trim()) return; const c = STATE.project.characters.find(x => x.id===cid); if (c && !c.personalityTags.includes(val.trim())) { c.personalityTags.push(val.trim()); renderCharacters(); } }
+function removeTag(cid, tag) { const c = STATE.project.characters.find(x => x.id===cid); if (c) { c.personalityTags = c.personalityTags.filter(t => t!==tag); renderCharacters(); } }
+function addRelationship(cid) {
+  const chars = STATE.project.characters.filter(c => c.id !== cid);
+  if (chars.length === 0) { toast('请先创建其他人物'); return; }
+  const opts = chars.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
+  const types = ['family','friend','lover','enemy','rival','colleague','other'];
+  const typeLabels = { family:'亲人', friend:'朋友', lover:'恋人', enemy:'仇敌', rival:'对手', colleague:'同事', other:'其他' };
+  showModal('添加关系', `
+    <div class="form-group"><label class="form-label">关联人物</label><select class="form-select" id="rel-target">${opts}</select></div>
+    <div class="form-group"><label class="form-label">关系类型</label><select class="form-select" id="rel-type">${types.map(t=>`<option value="${t}">${typeLabels[t]}</option>`).join('')}</select></div>
+    <div class="form-group"><label class="form-label">描述</label><input class="form-input" id="rel-label" placeholder="如：青梅竹马、杀父仇人..."></div>`,
+    `<button class="btn btn-secondary" onclick="closeModal()">取消</button><button class="btn btn-primary" onclick="doAddRel('${cid}')">添加</button>`);
+}
+function doAddRel(cid) {
+  const targetId = $('#rel-target').value; const type = $('#rel-type').value; const label = $('#rel-label').value;
+  const c = STATE.project.characters.find(x => x.id===cid);
+  if (c) { c.relationships.push({ id: genId('rel'), targetId, type, label, description: '' }); }
+  closeModal(); renderCharacters();
+}
+function removeRelationship(cid, rid) {
+  const c = STATE.project.characters.find(x => x.id===cid);
+  if (c) { c.relationships = c.relationships.filter(r => r.id !== rid); renderCharacters(); }
+}
+async function deleteCharacter(cid) {
+  const ok = await confirmDialog('确定删除此人物？关联关系和场景引用将被清理。');
+  if (!ok) return;
+  // Clean up relationships pointing to this character
+  STATE.project.characters.forEach(c => { c.relationships = c.relationships.filter(r => r.targetId !== cid); });
+  // Clean up scene references
+  (STATE.project.plot.acts||[]).forEach(a => (a.chapters||[]).forEach(ch => (ch.scenes||[]).forEach(sc => { sc.characterIds = (sc.characterIds||[]).filter(id => id !== cid); })));
+  STATE.project.characters = STATE.project.characters.filter(c => c.id !== cid);
+  // Clean graph positions
+  delete STATE.project._graphPositions[cid];
+  STATE.activeCharId = STATE.project.characters.length > 0 ? STATE.project.characters[0].id : null;
+  renderCharacters();
+}
+
+// ========================== RELATIONSHIP GRAPH =========================
+function renderGraph() {
+  const p = STATE.project;
+  if (!p) return;
+  $('#panel-title').textContent = '关系图谱';
+  $('#panel-actions').innerHTML = '';
+  const chars = p.characters;
+
+  if (chars.length === 0) {
+    $('#panel-content').innerHTML = `<div class="empty-state" style="padding:80px 20px"><div class="empty-icon">🔗</div><div class="empty-title">尚未创建人物</div><div style="font-size:12px">请先在"人物管理"面板中添加人物</div></div>`;
+    return;
+  }
+
+  $('#panel-content').innerHTML = `
+    <div id="graph-container">
+      <canvas id="graph-canvas"></canvas>
+      <div class="graph-toolbar">
+        <button onclick="STATE.graphEngine.zoomIn()" title="放大">＋</button>
+        <button onclick="STATE.graphEngine.zoomOut()" title="缩小">－</button>
+        <button onclick="STATE.graphEngine.autoLayout()" title="自动布局">⟳</button>
+        <button onclick="STATE.graphEngine.resetView()" title="重置视图">⌂</button>
+      </div>
+      <canvas id="graph-minimap" class="graph-minimap" width="160" height="120"></canvas>
+      <div class="graph-legend">
+        <div style="font-weight:600;margin-bottom:6px">图例</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px">
+          <span style="color:#3b82f6">● 朋友</span><span style="color:#ec4899">● 恋人</span><span style="color:#ef4444">● 仇敌</span><span style="color:#22c55e">● 亲人</span><span style="color:#f59e0b">● 对手</span><span style="color:#94a3b8">● 其他</span>
+        </div>
+      </div>
+    </div>`;
+
+  // Delay to let DOM render
+  setTimeout(() => {
+    STATE.graphEngine = new GraphEngine('graph-canvas', 'graph-minimap', p);
+    STATE.graphEngine.render();
+  }, 50);
+}
+
+class GraphEngine {
+  constructor(canvasId, minimapId, project) {
+    this.canvas = document.getElementById(canvasId);
+    this.ctx = this.canvas.getContext('2d');
+    this.minimap = document.getElementById(minimapId);
+    this.mctx = this.minimap.getContext('2d');
+    this.project = project;
+    this.scale = 1;
+    this.offsetX = 0; this.offsetY = 0;
+    this.dragging = null;
+    this.panning = false;
+    this.panStart = null;
+    this.selectedNode = null;
+    this.roleColors = { protagonist: '#f59e0b', antagonist: '#ef4444', supporting: '#3b82f6', minor: '#94a3b8' };
+    this.relColors = { family: '#22c55e', friend: '#3b82f6', lover: '#ec4899', enemy: '#ef4444', rival: '#f59e0b', colleague: '#94a3b8', other: '#94a3b8' };
+    this.resize();
+    this.setupEvents();
+  }
+
+  resize() {
+    const rect = this.canvas.parentElement.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    this.width = rect.width; this.height = rect.height;
+    this.canvas.width = rect.width * dpr;
+    this.canvas.height = rect.height * dpr;
+    this.canvas.style.width = rect.width + 'px';
+    this.canvas.style.height = rect.height + 'px';
+    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    this.ctx.textRendering = 'optimizeLegibility';
+  }
+
+  toWorld(sx, sy) {
+    return { x: (sx - this.width/2 - this.offsetX) / this.scale, y: (sy - this.height/2 - this.offsetY) / this.scale };
+  }
+  toScreen(wx, wy) {
+    return { x: wx * this.scale + this.width/2 + this.offsetX, y: wy * this.scale + this.height/2 + this.offsetY };
+  }
+
+  setupEvents() {
+    this.canvas.onmousedown = e => {
+      const rect = this.canvas.getBoundingClientRect();
+      const sx = e.clientX - rect.left, sy = e.clientY - rect.top;
+      const w = this.toWorld(sx, sy);
+      // Hit test nodes
+      const chars = this.project.characters;
+      let hit = null;
+      for (let i = chars.length - 1; i >= 0; i--) {
+        const pos = this.getNodePos(chars[i].id);
+        const nw = 140, nh = 50;
+        if (w.x >= pos.x - nw/2 && w.x <= pos.x + nw/2 && w.y >= pos.y - nh/2 && w.y <= pos.y + nh/2) {
+          hit = chars[i]; break;
+        }
+      }
+      if (hit) {
+        this.selectedNode = hit.id;
+        this.dragging = { id: hit.id, wx: w.x, wy: w.y, ox: this.getNodePos(hit.id).x, oy: this.getNodePos(hit.id).y };
+      } else {
+        this.panning = true; this.panStart = { sx, sy, ox: this.offsetX, oy: this.offsetY };
+      }
+      this.render();
+    };
+    this.canvas.onmousemove = e => {
+      const rect = this.canvas.getBoundingClientRect();
+      const sx = e.clientX - rect.left, sy = e.clientY - rect.top;
+      if (this.dragging) {
+        const w = this.toWorld(sx, sy);
+        const dx = w.x - this.dragging.wx, dy = w.y - this.dragging.wy;
+        this.project._graphPositions[this.dragging.id] = { x: this.dragging.ox + dx, y: this.dragging.oy + dy };
+        this.render();
+      } else if (this.panning) {
+        this.offsetX = this.panStart.ox + (sx - this.panStart.sx);
+        this.offsetY = this.panStart.oy + (sy - this.panStart.sy);
+        this.render();
+      }
+    };
+    this.canvas.onmouseup = () => { this.dragging = null; this.panning = false; };
+    this.canvas.onmouseleave = () => { this.dragging = null; this.panning = false; };
+    this.canvas.onwheel = e => {
+      e.preventDefault();
+      const rect = this.canvas.getBoundingClientRect();
+      const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+      const wBefore = this.toWorld(mx, my);
+      const zoom = e.deltaY < 0 ? 1.1 : 0.9;
+      this.scale = Math.max(0.3, Math.min(3.0, this.scale * zoom));
+      const wAfter = this.toWorld(mx, my);
+      this.offsetX += (wAfter.x - wBefore.x) * this.scale;
+      this.offsetY += (wAfter.y - wBefore.y) * this.scale;
+      this.render();
+    };
+    this.canvas.ondblclick = e => {
+      const rect = this.canvas.getBoundingClientRect();
+      const w = this.toWorld(e.clientX - rect.left, e.clientY - rect.top);
+      const chars = this.project.characters;
+      for (let i = chars.length - 1; i >= 0; i--) {
+        const pos = this.getNodePos(chars[i].id);
+        if (w.x >= pos.x - 70 && w.x <= pos.x + 70 && w.y >= pos.y - 25 && w.y <= pos.y + 25) {
+          STATE.activeCharId = chars[i].id;
+          STATE.activePanel = 'characters';
+          $$('.side-item[data-panel]').forEach(el => el.classList.remove('active'));
+          $('.side-item[data-panel=characters]').classList.add('active');
+          renderCharacters();
+          return;
+        }
+      }
+    };
+    new ResizeObserver(() => { this.resize(); this.render(); }).observe(this.canvas.parentElement);
+  }
+
+  getNodePos(cid) {
+    if (this.project._graphPositions[cid]) return this.project._graphPositions[cid];
+    const chars = this.project.characters;
+    const idx = chars.findIndex(c => c.id === cid);
+    const angle = (idx / Math.max(chars.length, 1)) * Math.PI * 2 - Math.PI / 2;
+    const radius = Math.max(chars.length * 30, 180);
+    return { x: Math.cos(angle) * radius, y: Math.sin(angle) * radius };
+  }
+
+  render() {
+    const ctx = this.ctx;
+    ctx.clearRect(0, 0, this.width, this.height);
+    // Grid
+    ctx.strokeStyle = '#e2e8f0';
+    ctx.lineWidth = 0.5;
+    const gs = 40 * this.scale;
+    const sx0 = (this.offsetX % gs + gs) % gs;
+    const sy0 = (this.offsetY % gs + gs) % gs;
+    for (let x = sx0; x < this.width; x += gs) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, this.height); ctx.stroke(); }
+    for (let y = sy0; y < this.height; y += gs) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(this.width, y); ctx.stroke(); }
+
+    const chars = this.project.characters;
+    // Edges
+    const drawnEdges = new Set();
+    chars.forEach(c => {
+      (c.relationships||[]).forEach(r => {
+        const target = chars.find(t => t.id === r.targetId);
+        if (!target) return;
+        const edgeKey = [c.id, r.targetId].sort().join('_') + '_' + r.type;
+        if (drawnEdges.has(edgeKey)) return;
+        drawnEdges.add(edgeKey);
+        const p1 = this.getNodePos(c.id), p2 = this.getNodePos(r.targetId);
+        const s1 = this.toScreen(p1.x, p1.y), s2 = this.toScreen(p2.x, p2.y);
+        const mx = (s1.x + s2.x) / 2, my = (s1.y + s2.y) / 2;
+        const dx = s2.x - s1.x, dy = s2.y - s1.y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        const nx = -dy / (dist||1), ny = dx / (dist||1);
+        const cp = { x: mx + nx * 30, y: my + ny * 30 };
+        ctx.strokeStyle = this.relColors[r.type] || '#94a3b8';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(s1.x, s1.y);
+        ctx.quadraticCurveTo(cp.x, cp.y, s2.x, s2.y);
+        ctx.stroke();
+        // Label
+        const relLabels = { family:'亲人', friend:'朋友', lover:'恋人', enemy:'仇敌', rival:'对手', colleague:'同事', other:'其他' };
+        const midT = 0.5;
+        const lx = (1-midT)*(1-midT)*s1.x + 2*(1-midT)*midT*cp.x + midT*midT*s2.x;
+        const ly = (1-midT)*(1-midT)*s1.y + 2*(1-midT)*midT*cp.y + midT*midT*s2.y;
+        ctx.fillStyle = '#fff';
+        ctx.font = '11px ' + getComputedStyle(document.body).fontFamily;
+        const label = r.label || relLabels[r.type] || r.type;
+        const tw = ctx.measureText(label).width;
+        ctx.fillRect(lx - tw/2 - 4, ly - 8, tw + 8, 16);
+        ctx.fillStyle = '#475569';
+        ctx.textAlign = 'center';
+        ctx.fillText(label, lx, ly + 3);
+        ctx.textAlign = 'start';
+      });
+    });
+
+    // Nodes
+    chars.forEach(c => {
+      const pos = this.getNodePos(c.id);
+      const s = this.toScreen(pos.x, pos.y);
+      const nw = 140, nh = 50;
+      const color = this.roleColors[c.role] || '#94a3b8';
+      const isSelected = c.id === this.selectedNode;
+      // Shadow
+      ctx.fillStyle = 'rgba(0,0,0,.08)';
+      ctx.beginPath(); this.roundRect(ctx, s.x-nw/2+2, s.y-nh/2+2, nw, nh, 8); ctx.fill();
+      // Body
+      ctx.fillStyle = '#fff';
+      ctx.strokeStyle = isSelected ? color : '#cbd5e1';
+      ctx.lineWidth = isSelected ? 2.5 : 1.5;
+      ctx.beginPath(); this.roundRect(ctx, s.x-nw/2, s.y-nh/2, nw, nh, 8); ctx.fill(); ctx.stroke();
+      // Avatar circle
+      ctx.fillStyle = color + '33';
+      ctx.beginPath(); ctx.arc(s.x - nw/2 + 22, s.y, 15, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = color;
+      ctx.font = 'bold 13px ' + getComputedStyle(document.body).fontFamily;
+      ctx.textAlign = 'center';
+      ctx.fillText(c.name.charAt(0), s.x - nw/2 + 22, s.y + 5);
+      // Name
+      ctx.fillStyle = '#0f172a';
+      ctx.font = 'bold 13px ' + getComputedStyle(document.body).fontFamily;
+      ctx.textAlign = 'start';
+      ctx.fillText(c.name, s.x - nw/2 + 44, s.y - 2);
+      // Role
+      const roleLabels = { protagonist:'主角', antagonist:'反派', supporting:'配角', minor:'次要' };
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '11px ' + getComputedStyle(document.body).fontFamily;
+      ctx.fillText(roleLabels[c.role]||c.role, s.x - nw/2 + 44, s.y + 14);
+      ctx.textAlign = 'start';
+    });
+
+    // Minimap
+    this.renderMinimap();
+  }
+
+  roundRect(ctx, x, y, w, h, r) { ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r); ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h); ctx.lineTo(x+r,y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-r); ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y); ctx.closePath(); }
+
+  renderMinimap() {
+    const mctx = this.mctx;
+    mctx.clearRect(0, 0, 160, 120);
+    mctx.fillStyle = '#f8fafc';
+    mctx.fillRect(0, 0, 160, 120);
+    const mw = 160, mh = 120;
+    // Determine world bounds
+    const chars = this.project.characters;
+    if (chars.length === 0) return;
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    chars.forEach(c => { const p = this.getNodePos(c.id); minX=Math.min(minX,p.x); maxX=Math.max(maxX,p.x); minY=Math.min(minY,p.y); maxY=Math.max(maxY,p.y); });
+    const pad = 100;
+    minX -= pad; maxX += pad; minY -= pad; maxY += pad;
+    const ww = maxX - minX, wh = maxY - minY;
+    const s = Math.min(mw/ww, mh/wh);
+    const ox = mw/2 - (minX+maxX)/2 * s, oy = mh/2 - (minY+maxY)/2 * s;
+    // Nodes
+    chars.forEach(c => {
+      const p = this.getNodePos(c.id);
+      const x = p.x * s + ox, y = p.y * s + oy;
+      mctx.fillStyle = this.roleColors[c.role] || '#94a3b8';
+      mctx.beginPath(); mctx.arc(x, y, 3, 0, Math.PI*2); mctx.fill();
+    });
+    // Viewport rect
+    const tl = this.toWorld(0, 0), br = this.toWorld(this.width, this.height);
+    mctx.strokeStyle = '#3b82f6';
+    mctx.lineWidth = 1;
+    mctx.strokeRect(tl.x * s + ox, tl.y * s + oy, (br.x-tl.x)*s, (br.y-tl.y)*s);
+  }
+
+  zoomIn() { this.scale = Math.min(3, this.scale * 1.2); this.render(); }
+  zoomOut() { this.scale = Math.max(0.3, this.scale / 1.2); this.render(); }
+  resetView() { this.scale = 1; this.offsetX = 0; this.offsetY = 0; this.render(); }
+  autoLayout() {
+    const chars = this.project.characters;
+    if (chars.length === 0) return;
+    const radius = Math.max(chars.length * 30, 180);
+    chars.forEach((c, i) => {
+      const angle = (i / chars.length) * Math.PI * 2 - Math.PI / 2;
+      this.project._graphPositions[c.id] = { x: Math.cos(angle) * radius, y: Math.sin(angle) * radius };
+    });
+    this.render();
+  }
+}
+
+// ========================== WORLDBUILDING ==============================
+function renderWorldBuilding() {
+  const p = STATE.project;
+  if (!p) return;
+  $('#panel-title').textContent = '世界观';
+  $('#panel-actions').innerHTML = '';
+  const wb = p.worldbuilding;
+  const tabs = [
+    { id: 'locations', label: '地点' },
+    { id: 'map', label: '地图' },
+    { id: 'timeline', label: '时间线' },
+    { id: 'rules', label: '规则体系' }
+  ];
+  const subtabsHtml = tabs.map(t => `<button class="wb-subtab ${STATE.activeWbTab===t.id?'active':''}" onclick="STATE.activeWbTab='${t.id}';renderWorldBuilding()">${t.label}</button>`).join('');
+
+  let bodyHtml = '';
+  if (STATE.activeWbTab === 'locations') {
+    const locs = wb.locations||[];
+    const shapeIcons = { city:'🏙', town:'🏘', village:'🏡', castle:'🏰', mountain:'⛰', forest:'🌲', river:'🌊', lake:'💧', desert:'🏜', island:'🏝', cave:'🕳', ruins:'🏚', temple:'🛕', tower:'🗼', other:'📍' };
+    const cardsHtml = locs.map(l => `
+      <div class="location-card" onclick="editLocation('${l.id}')">
+        <div class="loc-name">${shapeIcons[l.shape]||'📍'} ${escapeHtml(l.name)}</div>
+        <div class="loc-type">${escapeHtml(l.type||'')}</div>
+        <div class="loc-desc">${escapeHtml(l.description||'')}</div>
+      </div>`).join('');
+    bodyHtml = `<div class="location-grid">${cardsHtml}<div class="location-card add-card" onclick="editLocation()">+ 添加地点</div></div>`;
+  } else if (STATE.activeWbTab === 'map') {
+    bodyHtml = renderLocationMap();
+  } else if (STATE.activeWbTab === 'timeline') {
+    bodyHtml = renderTimelineH();
+  } else if (STATE.activeWbTab === 'rules') {
+    const cats = ['魔法体系','科技','社会','生物','物理','其他'];
+    const rules = wb.rules||[];
+    bodyHtml = '<div class="rules-list">';
+    cats.forEach(cat => {
+      const catRules = rules.filter(r => r.category === cat);
+      bodyHtml += `<div class="rule-cat">${cat}</div>`;
+      catRules.forEach(r => {
+        bodyHtml += `<div class="rule-item"><div class="rule-header" onclick="this.parentElement.classList.toggle('open')">${escapeHtml(r.name)}<span style="font-size:11px;color:var(--text-muted)">▼</span></div><div class="rule-body">${escapeHtml(r.description||'')}</div></div>`;
+      });
+      bodyHtml += `<button class="btn btn-xs btn-ghost mt-8" onclick="editRule('${cat}')">+ 添加规则</button>`;
+    });
+    bodyHtml += '</div>';
+  }
+
+  $('#panel-content').innerHTML = `<div class="wb-subtabs">${subtabsHtml}</div>${bodyHtml}`;
+
+  // Init map engine if needed
+  if (STATE.activeWbTab === 'map') {
+    setTimeout(() => {
+      STATE.locationMapEngine = new LocationMapEngine('locmap-canvas', 'locmap-minimap', p);
+      STATE.locationMapEngine.render();
+    }, 50);
+  }
+}
+
+// ========================== HORIZONTAL MULTI-TRACK TIMELINE ===========
+function renderTimelineH() {
+  const tl = (STATE.project.worldbuilding.timeline||[]).sort((a,b) => (a.order||0)-(b.order||0));
+  if (tl.length === 0) {
+    return `<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-title">暂无事件</div><button class="btn btn-primary btn-sm mt-8" onclick="editTimelineEvent()">+ 添加第一个事件</button></div>`;
+  }
+
+  // Gather all unique tracks
+  const tracks = [...new Set(tl.map(e => e.track || '主线'))];
+  // Gather all time points
+  const timePoints = [...new Set(tl.map(e => e.date || ''))].filter(Boolean).sort();
+  if (timePoints.length === 0) timePoints.push('');
+
+  // Axis ticks: use unique dates
+  const axisHtml = timePoints.map(t => `<div class="tick">${escapeHtml(t)}</div>`).join('');
+
+  // For each track, render events
+  const totalTimePoints = Math.max(timePoints.length, 1);
+  const tracksHtml = tracks.map(trackName => {
+    const trackEvents = tl.filter(e => (e.track||'主线') === trackName);
+    const eventHtml = trackEvents.map(e => {
+      const dateIdx = timePoints.indexOf(e.date||'');
+      const leftPct = dateIdx >= 0 ? (dateIdx / Math.max(totalTimePoints - 1, 1)) * 100 : 0;
+      const leftPos = `calc(${leftPct}% - 65px + ${dateIdx * 120}px * ${leftPct/100})`;
+      // Simplified positioning: use pixel offset based on index among unique dates
+      const pxPerTick = 120;
+      const leftPx = dateIdx >= 0 ? dateIdx * pxPerTick + 4 : 4;
+      return `<div class="tl-event" style="left:${leftPx}px" onclick="editTimelineEvent('${e.id}')">
+        <div class="tl-name">${escapeHtml(e.event||'')}</div>
+        <div class="tl-meta">${escapeHtml(e.date||'')}</div>
+        <div class="tl-desc">${escapeHtml(e.description||'')}</div>
+      </div>`;
+    }).join('');
+    return `<div class="timeline-track">
+      <div class="timeline-track-label">${escapeHtml(trackName)}</div>
+      <div class="timeline-track-events" style="min-width:${totalTimePoints * 120 + 60}px">${eventHtml}</div>
+    </div>`;
+  }).join('');
+
+  return `<div class="timeline-wrap">
+    <div class="timeline-h">
+      <div class="timeline-axis" style="padding-left:100px;min-width:${totalTimePoints * 120 + 60}px">${axisHtml}</div>
+      <div class="timeline-tracks">${tracksHtml}</div>
+    </div>
+  </div>
+  <div class="flex gap-8 mt-8">
+    <button class="btn btn-primary btn-sm" onclick="editTimelineEvent()">+ 添加事件</button>
+    <button class="btn btn-sm btn-secondary" onclick="addTimelineTrack()">+ 添加轨道</button>
+  </div>`;
+}
+
+function addTimelineTrack() {
+  showModal('添加轨道', `
+    <div class="form-group"><label class="form-label">轨道名称（如：A线-京城 / B线-边关）</label><input class="form-input" id="new-track-name" placeholder="输入轨道名称"></div>`,
+    `<button class="btn btn-secondary" onclick="closeModal()">取消</button><button class="btn btn-primary" onclick="doAddTrack()">添加</button>`);
+}
+function doAddTrack() {
+  const name = $('#new-track-name').value.trim();
+  if (!name) { toast('请输入轨道名称'); return; }
+  // Add a placeholder event on this track so it appears
+  STATE.project.worldbuilding.timeline.push({
+    id: genId('tl'), track: name, era: '', date: '', event: '(空)', description: '', order: STATE.project.worldbuilding.timeline.length
+  });
+  closeModal(); renderWorldBuilding();
+}
+
+// ========================== LOCATION MAP ENGINE =======================
+function renderLocationMap() {
+  const locs = STATE.project.worldbuilding.locations||[];
+  if (locs.length === 0) {
+    return `<div class="empty-state"><div class="empty-icon">🗺</div><div class="empty-title">尚未创建地点</div><div style="font-size:12px">请先在"地点"标签中添加地点，然后在此处摆放地图</div></div>`;
+  }
+  return `<div id="graph-container" style="height:calc(100vh - 200px)">
+    <canvas id="locmap-canvas"></canvas>
+    <div class="graph-toolbar">
+      <button onclick="STATE.locationMapEngine.zoomIn()" title="放大">＋</button>
+      <button onclick="STATE.locationMapEngine.zoomOut()" title="缩小">－</button>
+      <button onclick="STATE.locationMapEngine.autoLayout()" title="自动布局">⟳</button>
+      <button onclick="STATE.locationMapEngine.resetView()" title="重置视图">⌂</button>
+    </div>
+    <canvas id="locmap-minimap" class="graph-minimap" width="160" height="120"></canvas>
+    <div class="graph-legend">
+      <div style="font-weight:600;margin-bottom:4px">地点图例</div>
+      <div style="font-size:11px;color:var(--text-secondary)">拖拽移动 · 滚轮缩放 · 双击编辑</div>
+    </div>
+  </div>`;
+}
+
+class LocationMapEngine {
+  constructor(canvasId, minimapId, project) {
+    this.canvas = document.getElementById(canvasId);
+    this.ctx = this.canvas.getContext('2d');
+    this.minimap = document.getElementById(minimapId);
+    if (this.minimap) this.mctx = this.minimap.getContext('2d');
+    this.project = project;
+    this.scale = 1; this.offsetX = 0; this.offsetY = 0;
+    this.dragging = null; this.panning = false; this.panStart = null; this.selectedNode = null;
+    this.shapeColors = { city:'#3b82f6', town:'#6366f1', village:'#8b5cf6', castle:'#64748b', mountain:'#78716c', forest:'#22c55e', river:'#06b6d4', lake:'#0ea5e9', desert:'#f59e0b', island:'#10b981', cave:'#78716c', ruins:'#a1a1aa', temple:'#f97316', tower:'#a855f7', other:'#3b82f6' };
+    this.shapeIcons = { city:'🏙', town:'🏘', village:'🏡', castle:'🏰', mountain:'⛰', forest:'🌲', river:'🌊', lake:'💧', desert:'🏜', island:'🏝', cave:'🕳', ruins:'🏚', temple:'🛕', tower:'🗼', other:'📍' };
+    this.resize();
+    this.setupEvents();
+  }
+
+  resize() {
+    const rect = this.canvas.parentElement.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    this.width = rect.width; this.height = rect.height;
+    this.canvas.width = rect.width * dpr;
+    this.canvas.height = rect.height * dpr;
+    this.canvas.style.width = rect.width + 'px';
+    this.canvas.style.height = rect.height + 'px';
+    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  toWorld(sx, sy) {
+    return { x: (sx - this.width/2 - this.offsetX) / this.scale, y: (sy - this.height/2 - this.offsetY) / this.scale };
+  }
+  toScreen(wx, wy) {
+    return { x: wx * this.scale + this.width/2 + this.offsetX, y: wy * this.scale + this.height/2 + this.offsetY };
+  }
+
+  getNodePos(locId) {
+    const key = locId;
+    if (this.project._locationPositions && this.project._locationPositions[key]) return this.project._locationPositions[key];
+    const locs = this.project.worldbuilding.locations||[];
+    const idx = locs.findIndex(l => l.id === locId);
+    const angle = (idx / Math.max(locs.length, 1)) * Math.PI * 2 - Math.PI / 2;
+    const radius = Math.max(locs.length * 35, 200);
+    return { x: Math.cos(angle) * radius, y: Math.sin(angle) * radius };
+  }
+
+  setupEvents() {
+    this.canvas.onmousedown = e => {
+      const rect = this.canvas.getBoundingClientRect();
+      const sx = e.clientX - rect.left, sy = e.clientY - rect.top;
+      const w = this.toWorld(sx, sy);
+      const locs = this.project.worldbuilding.locations||[];
+      let hit = null;
+      for (let i = locs.length-1; i >= 0; i--) {
+        const pos = this.getNodePos(locs[i].id);
+        const r = 40;
+        if (w.x >= pos.x-r && w.x <= pos.x+r && w.y >= pos.y-r && w.y <= pos.y+r) { hit = locs[i]; break; }
+      }
+      if (hit) {
+        this.selectedNode = hit.id;
+        this.dragging = { id: hit.id, wx: w.x, wy: w.y, ox: this.getNodePos(hit.id).x, oy: this.getNodePos(hit.id).y };
+      } else {
+        this.panning = true; this.panStart = { sx, sy, ox: this.offsetX, oy: this.offsetY };
+      }
+      this.render();
+    };
+    this.canvas.onmousemove = e => {
+      const rect = this.canvas.getBoundingClientRect();
+      const sx = e.clientX - rect.left, sy = e.clientY - rect.top;
+      if (this.dragging) {
+        const w = this.toWorld(sx, sy);
+        const dx = w.x - this.dragging.wx, dy = w.y - this.dragging.wy;
+        if (!this.project._locationPositions) this.project._locationPositions = {};
+        this.project._locationPositions[this.dragging.id] = { x: this.dragging.ox + dx, y: this.dragging.oy + dy };
+        this.render();
+      } else if (this.panning) {
+        this.offsetX = this.panStart.ox + (sx - this.panStart.sx);
+        this.offsetY = this.panStart.oy + (sy - this.panStart.sy);
+        this.render();
+      }
+    };
+    this.canvas.onmouseup = () => { this.dragging = null; this.panning = false; };
+    this.canvas.onmouseleave = () => { this.dragging = null; this.panning = false; };
+    this.canvas.onwheel = e => {
+      e.preventDefault();
+      const rect = this.canvas.getBoundingClientRect();
+      const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+      const wBefore = this.toWorld(mx, my);
+      const zoom = e.deltaY < 0 ? 1.1 : 0.9;
+      this.scale = Math.max(0.3, Math.min(3.0, this.scale * zoom));
+      const wAfter = this.toWorld(mx, my);
+      this.offsetX += (wAfter.x - wBefore.x) * this.scale;
+      this.offsetY += (wAfter.y - wBefore.y) * this.scale;
+      this.render();
+    };
+    this.canvas.ondblclick = e => {
+      const rect = this.canvas.getBoundingClientRect();
+      const w = this.toWorld(e.clientX - rect.left, e.clientY - rect.top);
+      const locs = this.project.worldbuilding.locations||[];
+      for (let i = locs.length-1; i >= 0; i--) {
+        const pos = this.getNodePos(locs[i].id);
+        if (w.x >= pos.x-40 && w.x <= pos.x+40 && w.y >= pos.y-40 && w.y <= pos.y+40) {
+          editLocation(locs[i].id); return;
+        }
+      }
+    };
+    new ResizeObserver(() => { this.resize(); this.render(); }).observe(this.canvas.parentElement);
+  }
+
+  drawLocationShape(ctx, x, y, shape, color, scale) {
+    const s = scale || 1; ctx.fillStyle = color; ctx.strokeStyle = color; ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    switch(shape) {
+      case 'mountain': ctx.moveTo(x-18*s,y+10*s); ctx.lineTo(x,y-16*s); ctx.lineTo(x+12*s,y); ctx.lineTo(x+20*s,y+10*s); ctx.closePath(); ctx.fill(); ctx.fillStyle='#fff'; ctx.beginPath(); ctx.moveTo(x-10*s,y+4*s); ctx.lineTo(x-2*s,y-10*s); ctx.lineTo(x+6*s,y-2*s); ctx.closePath(); ctx.fill(); break;
+      case 'forest': ctx.arc(x-8*s,y-4*s,9*s,0,Math.PI*2); ctx.fill(); ctx.arc(x+8*s,y-2*s,8*s,0,Math.PI*2); ctx.fill(); ctx.arc(x,y-10*s,9*s,0,Math.PI*2); ctx.fill(); ctx.fillStyle='#fff'; ctx.fillRect(x-1.5*s,y,3*s,12*s); break;
+      case 'river': ctx.moveTo(x-20*s,y+8*s); ctx.quadraticCurveTo(x-8*s,y-6*s,x,y+2*s); ctx.quadraticCurveTo(x+8*s,y+10*s,x+20*s,y-4*s); ctx.strokeStyle=color; ctx.lineWidth=3*s; ctx.stroke(); ctx.lineWidth=1; break;
+      case 'lake': ctx.ellipse(x,y,16*s,10*s,0,0,Math.PI*2); ctx.fill(); ctx.fillStyle='rgba(255,255,255,.3)'; ctx.ellipse(x-4*s,y-2*s,6*s,4*s,0.3,0,Math.PI*2); ctx.fill(); break;
+      case 'desert': ctx.moveTo(x-16*s,y+8*s); ctx.quadraticCurveTo(x-8*s,y-10*s,x,y+2*s); ctx.quadraticCurveTo(x+8*s,y-8*s,x+16*s,y+6*s); ctx.fill(); break;
+      case 'island': ctx.ellipse(x,y,14*s,9*s,0,0,Math.PI*2); ctx.fill(); ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(x-3*s,y-6*s,3*s,0,Math.PI*2); ctx.fill(); break;
+      case 'castle': ctx.fillRect(x-14*s,y-4*s,28*s,14*s); ctx.fillRect(x-10*s,y-14*s,8*s,10*s); ctx.fillRect(x+2*s,y-10*s,8*s,6*s); ctx.fillStyle='#fff'; ctx.fillRect(x-6*s,y,4*s,10*s); ctx.fillRect(x-1*s,y-6*s,2*s,6*s); ctx.fillRect(x+5*s,y-3*s,2*s,4*s); break;
+      case 'temple': ctx.moveTo(x,y-16*s); ctx.lineTo(x-16*s,y+10*s); ctx.lineTo(x+16*s,y+10*s); ctx.closePath(); ctx.fill(); ctx.fillStyle='#fff'; ctx.fillRect(x-6*s,y-4*s,12*s,8*s); ctx.fillRect(x-1*s,y+6*s,2*s,4*s); break;
+      case 'tower': ctx.fillRect(x-8*s,y-16*s,16*s,26*s); ctx.fillStyle='#fff'; ctx.fillRect(x-4*s,y-12*s,8*s,8*s); ctx.fillRect(x-4*s,y,8*s,10*s); break;
+      case 'ruins': ctx.moveTo(x-14*s,y+8*s); ctx.lineTo(x-12*s,y-6*s); ctx.lineTo(x-2*s,y-10*s); ctx.lineTo(x+4*s,y); ctx.lineTo(x+12*s,y-8*s); ctx.lineTo(x+16*s,y+6*s); ctx.fill(); ctx.fillStyle='rgba(255,255,255,.3)'; ctx.fillRect(x-4*s,y+2*s,5*s,4*s); break;
+      case 'village': ctx.fillRect(x-4*s,y-6*s,12*s,8*s); ctx.moveTo(x-6*s,y-6*s); ctx.lineTo(x+1*s,y-14*s); ctx.lineTo(x+8*s,y-6*s); ctx.closePath(); ctx.fill(); ctx.fillStyle='#fff'; ctx.fillRect(x-1*s,y-3*s,3*s,5*s); break;
+      case 'town': ctx.fillRect(x-10*s,y-4*s,20*s,12*s); ctx.fillStyle='#fff'; ctx.fillRect(x-6*s,y-2*s,5*s,5*s); ctx.fillRect(x+2*s,y-2*s,5*s,5*s); ctx.fillRect(x-2*s,y-8*s,5*s,4*s); break;
+      case 'cave': ctx.beginPath(); ctx.arc(x,y,15*s,0,Math.PI*2); ctx.fill(); ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(x-4*s,y-2*s,7*s,0,Math.PI*2); ctx.fill(); break;
+      default: ctx.beginPath(); ctx.arc(x,y,14*s,0,Math.PI*2); ctx.fill(); ctx.fillStyle='#fff'; ctx.font=`${12*s}px sans-serif`; ctx.textAlign='center'; ctx.fillText('📍',x,y+3*s); break;
+    }
+    ctx.textAlign = 'start';
+  }
+
+  render() {
+    const ctx = this.ctx;
+    ctx.clearRect(0, 0, this.width, this.height);
+    // Grid
+    ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 0.5;
+    const gs = 40 * this.scale;
+    const sx0 = (this.offsetX % gs + gs) % gs, sy0 = (this.offsetY % gs + gs) % gs;
+    for (let x = sx0; x < this.width; x += gs) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, this.height); ctx.stroke(); }
+    for (let y = sy0; y < this.height; y += gs) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(this.width, y); ctx.stroke(); }
+
+    const locs = this.project.worldbuilding.locations||[];
+    // Draw edges between nearby locations? No edges by default, user places them.
+    // Draw nodes
+    locs.forEach(l => {
+      const pos = this.getNodePos(l.id);
+      const s = this.toScreen(pos.x, pos.y);
+      const shape = l.shape || 'other';
+      const color = this.shapeColors[shape] || '#3b82f6';
+      const isSelected = l.id === this.selectedNode;
+      // Glow for selected
+      if (isSelected) { ctx.fillStyle = 'rgba(59,130,246,.15)'; ctx.beginPath(); ctx.arc(s.x, s.y, 48, 0, Math.PI*2); ctx.fill(); }
+      this.drawLocationShape(ctx, s.x, s.y, shape, color, 1.0);
+      // Border circle for selected
+      if (isSelected) { ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(s.x, s.y, 36, 0, Math.PI*2); ctx.stroke(); }
+      // Label below
+      ctx.fillStyle = '#0f172a';
+      ctx.font = 'bold 12px ' + getComputedStyle(document.body).fontFamily;
+      ctx.textAlign = 'center';
+      ctx.fillText(l.name, s.x, s.y + 32);
+      ctx.textAlign = 'start';
+    });
+
+    // Minimap
+    if (this.minimap) this.renderMinimap();
+  }
+
+  renderMinimap() {
+    if (!this.minimap) return;
+    const mctx = this.mctx; mctx.clearRect(0, 0, 160, 120); mctx.fillStyle = '#f8fafc'; mctx.fillRect(0, 0, 160, 120);
+    const locs = this.project.worldbuilding.locations||[];
+    if (locs.length === 0) return;
+    let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
+    locs.forEach(l => { const p=this.getNodePos(l.id); minX=Math.min(minX,p.x); maxX=Math.max(maxX,p.x); minY=Math.min(minY,p.y); maxY=Math.max(maxY,p.y); });
+    const pad=100; minX-=pad; maxX+=pad; minY-=pad; maxY+=pad;
+    const ww=maxX-minX, wh=maxY-minY;
+    const sc=Math.min(160/ww,120/wh);
+    const ox=80-(minX+maxX)/2*sc, oy=60-(minY+maxY)/2*sc;
+    locs.forEach(l => { const p=this.getNodePos(l.id); mctx.fillStyle=this.shapeColors[l.shape||'other']||'#3b82f6'; mctx.beginPath(); mctx.arc(p.x*sc+ox,p.y*sc+oy,3,0,Math.PI*2); mctx.fill(); });
+    const tl=this.toWorld(0,0), br=this.toWorld(this.width,this.height);
+    mctx.strokeStyle='#3b82f6'; mctx.lineWidth=1; mctx.strokeRect(tl.x*sc+ox,tl.y*sc+oy,(br.x-tl.x)*sc,(br.y-tl.y)*sc);
+  }
+
+  zoomIn() { this.scale=Math.min(3,this.scale*1.2); this.render(); }
+  zoomOut() { this.scale=Math.max(0.3,this.scale/1.2); this.render(); }
+  resetView() { this.scale=1; this.offsetX=0; this.offsetY=0; this.render(); }
+  autoLayout() {
+    const locs = this.project.worldbuilding.locations||[];
+    if (locs.length===0) return;
+    if (!this.project._locationPositions) this.project._locationPositions={};
+    const radius=Math.max(locs.length*35,200);
+    locs.forEach((l,i) => {
+      const angle=(i/locs.length)*Math.PI*2 - Math.PI/2;
+      this.project._locationPositions[l.id]={x:Math.cos(angle)*radius, y:Math.sin(angle)*radius};
+    });
+    this.render();
+  }
+}
+
+// ========================== LOCATION EDIT (with shape) =================
+function editLocation(id) {
+  const loc = id ? STATE.project.worldbuilding.locations.find(l => l.id===id) : null;
+  const shapes = ['city','town','village','castle','mountain','forest','river','lake','desert','island','cave','ruins','temple','tower','other'];
+  const shapeLabels = { city:'🏙 城市', town:'🏘 城镇', village:'🏡 村庄', castle:'🏰 城堡', mountain:'⛰ 山脉', forest:'🌲 森林', river:'🌊 河流', lake:'💧 湖泊', desert:'🏜 沙漠', island:'🏝 岛屿', cave:'🕳 洞穴', ruins:'🏚 废墟', temple:'🛕 神殿', tower:'🗼 高塔', other:'📍 其他' };
+  const shapeOpts = shapes.map(s => `<option value="${s}" ${(loc&&loc.shape)===s?'selected':''}>${shapeLabels[s]}</option>`).join('');
+  showModal(id ? '编辑地点' : '添加地点', `
+    <div class="form-group"><label class="form-label">名称</label><input class="form-input" id="loc-name" value="${escapeHtml(loc?loc.name:'')}"></div>
+    <div class="form-group"><label class="form-label">类型</label><input class="form-input" id="loc-type" value="${escapeHtml(loc?loc.type||'':'')}" placeholder="城市/国家/星球/建筑..."></div>
+    <div class="form-group"><label class="form-label">地图图标</label><select class="form-select" id="loc-shape">${shapeOpts}</select></div>
+    <div class="form-group"><label class="form-label">描述</label><textarea class="form-textarea" id="loc-desc">${escapeHtml(loc?loc.description||'':'')}</textarea></div>`,
+    `<button class="btn btn-secondary" onclick="closeModal()">取消</button><button class="btn btn-primary" onclick="saveLocation('${id||''}')">保存</button>`);
+}
+function saveLocation(id) {
+  const name = $('#loc-name').value.trim(); if (!name) { toast('请输入名称'); return; }
+  const data = { name, type: $('#loc-type').value, shape: $('#loc-shape').value, description: $('#loc-desc').value };
+  if (id) { const l = STATE.project.worldbuilding.locations.find(x => x.id===id); if (l) { l.name=data.name; l.type=data.type; l.shape=data.shape; l.description=data.description; } }
+  else { STATE.project.worldbuilding.locations.push({ id: genId('loc'), ...data }); }
+  closeModal(); renderWorldBuilding();
+}
+
+// ========================== TIMELINE EVENT EDIT (with track) ===========
+function editTimelineEvent(id) {
+  const ev = id ? STATE.project.worldbuilding.timeline.find(e => e.id===id) : null;
+  const existingTracks = [...new Set((STATE.project.worldbuilding.timeline||[]).map(e => e.track||'主线').filter(Boolean))];
+  const trackOpts = existingTracks.map(t => `<option value="${escapeHtml(t)}" ${(ev&&ev.track||'主线')===t?'selected':''}>${escapeHtml(t)}</option>`).join('');
+  showModal(id ? '编辑时间线事件' : '添加事件', `
+    <div class="form-group"><label class="form-label">轨道</label><select class="form-select" id="tl-track">${trackOpts||'<option value="主线">主线</option>'}</select><div class="text-sm text-muted mt-8">不同轨道代表并行发生的事件线，如不同地点/视角</div></div>
+    <div class="form-group"><label class="form-label">时代</label><input class="form-input" id="tl-era" value="${escapeHtml(ev?ev.era||'':'')}" placeholder="如：第一纪元"></div>
+    <div class="form-group"><label class="form-label">日期</label><input class="form-input" id="tl-date" value="${escapeHtml(ev?ev.date||'':'')}" placeholder="如：3024年"></div>
+    <div class="form-group"><label class="form-label">事件</label><input class="form-input" id="tl-event" value="${escapeHtml(ev?ev.event||'':'')}"></div>
+    <div class="form-group"><label class="form-label">描述</label><textarea class="form-textarea" id="tl-desc">${escapeHtml(ev?ev.description||'':'')}</textarea></div>`,
+    `<button class="btn btn-secondary" onclick="closeModal()">取消</button>${id?`<button class="btn btn-danger btn-sm" style="margin-right:auto" onclick="STATE.project.worldbuilding.timeline=STATE.project.worldbuilding.timeline.filter(e=>e.id!=='${id}');closeModal();renderWorldBuilding()">删除</button>`:''}<button class="btn btn-primary" onclick="saveTimelineEvent('${id||''}')">保存</button>`);
+}
+function saveTimelineEvent(id) {
+  const event = $('#tl-event').value.trim(); if (!event) { toast('请输入事件名称'); return; }
+  const data = { track: $('#tl-track').value||'主线', era: $('#tl-era').value, date: $('#tl-date').value, event, description: $('#tl-desc').value };
+  if (id) { const e = STATE.project.worldbuilding.timeline.find(x => x.id===id); if (e) Object.assign(e, data); }
+  else { STATE.project.worldbuilding.timeline.push({ id: genId('tl'), ...data, order: STATE.project.worldbuilding.timeline.length }); }
+  closeModal(); renderWorldBuilding();
+}
+function editRule(cat) {
+  showModal('添加规则 (' + cat + ')', `
+    <div class="form-group"><label class="form-label">名称</label><input class="form-input" id="rule-name"></div>
+    <div class="form-group"><label class="form-label">描述</label><textarea class="form-textarea" id="rule-desc"></textarea></div>`,
+    `<button class="btn btn-secondary" onclick="closeModal()">取消</button><button class="btn btn-primary" onclick="saveRule('${cat}')">保存</button>`);
+}
+function saveRule(cat) {
+  const name = $('#rule-name').value.trim(); if (!name) { toast('请输入规则名称'); return; }
+  STATE.project.worldbuilding.rules.push({ id: genId('rule'), category: cat, name, description: $('#rule-desc').value });
+  closeModal(); renderWorldBuilding();
+}
+
+// ========================== PLOT OUTLINE ===============================
+function renderPlot() {
+  const p = STATE.project;
+  if (!p) return;
+  ensurePlotStructure();
+  $('#panel-title').textContent = '情节大纲';
+  let sceneCount = 0, doneCount = 0;
+  p.plot.acts.forEach(a => a.chapters.forEach(ch => ch.scenes.forEach(sc => { sceneCount++; if (sc.status==='done') doneCount++; })));
+  $('#panel-actions').innerHTML = `<span class="text-sm text-secondary">已完成 ${doneCount}/${sceneCount} 场景</span>
+    <button class="btn btn-primary btn-sm" onclick="addAct()">+ 添加幕</button>`;
+
+  const chars = p.characters;
+  const locs = p.worldbuilding.locations;
+  const statusLabels = { draft: '草稿', outline: '大纲', done: '已完成' };
+
+  function renderSceneCard(sc) {
+    const linkedChars = (sc.characterIds||[]).map(id => chars.find(c => c.id===id)).filter(Boolean);
+    const loc = locs.find(l => l.id === sc.locationId);
+    return `<div class="scene-card" onclick="openSceneDetail('${sc.id}')">
+      <span class="sc-status"><span class="badge badge-xs ${sc.status==='done'?'status-done':sc.status==='outline'?'status-outline':'status-draft'}">${statusLabels[sc.status]||'草稿'}</span></span>
+      <span class="sc-title">${escapeHtml(sc.title||'未命名场景')}</span>
+      ${linkedChars.length > 0 ? `<span class="sc-meta">${linkedChars.map(c=>c.name).join('、')}</span>` : ''}
+      ${loc ? `<span class="sc-meta">📍${escapeHtml(loc.name)}</span>` : ''}
+    </div>`;
+  }
+
+  const actsHtml = p.plot.acts.map((act, ai) => `
+    <div class="act-block">
+      <div class="act-header" onclick="this.classList.toggle('collapsed')">
+        <span class="expand-icon">▼</span>
+        <span contenteditable="true" onblur="STATE.project.plot.acts[${ai}].title=this.textContent" style="flex:1">${escapeHtml(act.title)}</span>
+        <button class="btn btn-xs btn-ghost" onclick="event.stopPropagation();addChapter('${act.id}')">+ 章节</button>
+        <button class="btn btn-xs btn-danger" onclick="event.stopPropagation();deleteAct('${act.id}')" style="margin-left:4px">✕</button>
+      </div>
+      <div class="act-children">
+        ${(act.chapters||[]).map((ch, ci) => `
+          <div class="chapter-block">
+            <div class="chapter-header" onclick="this.classList.toggle('collapsed')">
+              <span class="expand-icon">▼</span>
+              <span contenteditable="true" onblur="STATE.project.plot.acts[${ai}].chapters[${ci}].title=this.textContent" style="flex:1">${escapeHtml(ch.title)}</span>
+              <button class="btn btn-xs btn-ghost" onclick="event.stopPropagation();addScene('${ch.id}')">+ 场景</button>
+              <button class="btn btn-xs btn-danger" onclick="event.stopPropagation();deleteChapter('${act.id}','${ch.id}')" style="margin-left:2px">✕</button>
+            </div>
+            <div class="chapter-scenes">
+              ${(ch.scenes||[]).length === 0 ? '<div class="empty-scene">暂无场景</div>' : ch.scenes.map(renderSceneCard).join('')}
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>`).join('');
+
+  $('#panel-content').innerHTML = `<div class="plot-tree">${actsHtml}</div>`;
+}
+
+function addAct() {
+  const act = { id: genId('act'), title: '新幕', order: STATE.project.plot.acts.length, chapters: [{ id: genId('ch'), title: '第一章', order: 0, scenes: [] }] };
+  STATE.project.plot.acts.push(act);
+  renderPlot();
+}
+function deleteAct(aid) {
+  STATE.project.plot.acts = STATE.project.plot.acts.filter(a => a.id !== aid);
+  renderPlot();
+}
+function addChapter(aid) {
+  const act = STATE.project.plot.acts.find(a => a.id === aid);
+  if (act) { act.chapters.push({ id: genId('ch'), title: '新章节', order: act.chapters.length, scenes: [] }); }
+  renderPlot();
+}
+function deleteChapter(aid, cid) {
+  const act = STATE.project.plot.acts.find(a => a.id === aid);
+  if (act) { act.chapters = act.chapters.filter(ch => ch.id !== cid); }
+  renderPlot();
+}
+function addScene(cid) {
+  const scene = { id: genId('sc'), title: '新场景', summary: '', characterIds: [], locationId: '', status: 'draft', order: 0, notes: '' };
+  for (const act of STATE.project.plot.acts) {
+    const ch = (act.chapters||[]).find(c => c.id === cid);
+    if (ch) { scene.order = ch.scenes.length; ch.scenes.push(scene); break; }
+  }
+  renderPlot();
+  openSceneDetail(scene.id);
+}
+
+function openSceneDetail(scid) {
+  let scene = null;
+  for (const act of STATE.project.plot.acts) {
+    for (const ch of (act.chapters||[])) {
+      const found = (ch.scenes||[]).find(s => s.id === scid);
+      if (found) { scene = found; break; }
+    }
+  }
+  if (!scene) return;
+  const chars = STATE.project.characters;
+  const locs = STATE.project.worldbuilding.locations;
+  const charCheckboxes = chars.map(c => `<label style="display:block;padding:4px 0;font-size:13px"><input type="checkbox" value="${c.id}" ${(scene.characterIds||[]).includes(c.id)?'checked':''}> ${escapeHtml(c.name)}</label>`).join('');
+  const locOptions = locs.map(l => `<option value="${l.id}" ${scene.locationId===l.id?'selected':''}>${escapeHtml(l.name)}</option>`).join('');
+
+  const panel = $('#slide-panel');
+  panel.innerHTML = `
+    <button class="close-btn btn-icon btn-ghost" onclick="$('#slide-panel').style.display='none'">✕</button>
+    <h3 style="margin-bottom:16px">场景详情</h3>
+    <div class="form-group"><label class="form-label">标题</label><input class="form-input" id="sc-title" value="${escapeHtml(scene.title)}"></div>
+    <div class="form-group"><label class="form-label">摘要</label><textarea class="form-textarea" id="sc-summary">${escapeHtml(scene.summary||'')}</textarea></div>
+    <div class="form-group"><label class="form-label">状态</label>
+      <select class="form-select" id="sc-status"><option value="draft" ${scene.status==='draft'?'selected':''}>草稿</option><option value="outline" ${scene.status==='outline'?'selected':''}>大纲</option><option value="done" ${scene.status==='done'?'selected':''}>已完成</option></select></div>
+    <div class="form-group"><label class="form-label">出场人物</label><div style="max-height:150px;overflow-y:auto">${charCheckboxes||'<span class="text-muted text-sm">暂无人物</span>'}</div></div>
+    <div class="form-group"><label class="form-label">地点</label><select class="form-select" id="sc-location"><option value="">— 无 —</option>${locOptions}</select></div>
+    <div class="form-group"><label class="form-label">笔记</label><textarea class="form-textarea" id="sc-notes">${escapeHtml(scene.notes||'')}</textarea></div>
+    <div class="flex gap-8">
+      <button class="btn btn-primary" onclick="saveSceneDetail('${scid}')">保存</button>
+      <button class="btn btn-danger" onclick="deleteScene('${scid}')">删除场景</button>
+    </div>`;
+  panel.style.display = 'block';
+}
+function saveSceneDetail(scid) {
+  for (const act of STATE.project.plot.acts) {
+    for (const ch of (act.chapters||[])) {
+      const sc = (ch.scenes||[]).find(s => s.id === scid);
+      if (sc) {
+        sc.title = $('#sc-title').value;
+        sc.summary = $('#sc-summary').value;
+        sc.status = $('#sc-status').value;
+        sc.locationId = $('#sc-location').value;
+        sc.notes = $('#sc-notes').value;
+        sc.characterIds = Array.from($$('input[type=checkbox]:checked', $('#slide-panel'))).map(el => el.value);
+        $('#slide-panel').style.display = 'none';
+        renderPlot();
+        return;
+      }
+    }
+  }
+}
+function deleteScene(scid) {
+  for (const act of STATE.project.plot.acts) {
+    for (const ch of (act.chapters||[])) {
+      const idx = (ch.scenes||[]).findIndex(s => s.id === scid);
+      if (idx >= 0) { ch.scenes.splice(idx, 1); $('#slide-panel').style.display = 'none'; renderPlot(); return; }
+    }
+  }
+}
+
+// ========================== THEMES & NOTES =============================
+function renderThemes() {
+  const p = STATE.project;
+  if (!p) return;
+  $('#panel-title').textContent = '主题笔记';
+  $('#panel-actions').innerHTML = `<button class="btn btn-primary btn-sm" onclick="editNote()">+ 新建笔记</button>`;
+
+  const themes = p.themes;
+  const themesHtml = (themes.centralThemes||[]).map((t,i) => `<span class="tag">${escapeHtml(t)}<span class="tag-x" onclick="removeTheme(${i})">×</span></span>`).join('');
+
+  const motifs = themes.motifs||[];
+  const motifsHtml = motifs.map(m => `<tr><td>${escapeHtml(m.name)}</td><td>${escapeHtml(m.description||'')}</td><td>${escapeHtml(m.appearances||'')}</td><td><button class="btn btn-xs btn-ghost" onclick="editMotif('${m.id}')">✎</button><button class="btn btn-xs btn-danger" style="margin-left:4px" onclick="deleteMotif('${m.id}')">✕</button></td></tr>`).join('');
+
+  const searchTerm = (window._noteSearch||'').toLowerCase();
+  let notes = themes.notes||[];
+  if (searchTerm) { notes = notes.filter(n => n.title.toLowerCase().includes(searchTerm) || (n.content||'').toLowerCase().includes(searchTerm) || (n.tags||[]).some(t => t.toLowerCase().includes(searchTerm))); }
+  // Pinned first
+  notes.sort((a,b) => (b.pinned?1:0) - (a.pinned?1:0));
+  const notesHtml = notes.map(n => `
+    <div class="note-card ${n.pinned?'pinned':''}" onclick="editNote('${n.id}')">
+      <div class="note-title">${n.pinned?'📌 ':''}${escapeHtml(n.title||'无标题')}</div>
+      <div class="note-preview">${escapeHtml((n.content||'').slice(0,120))}</div>
+      <div class="note-meta"><span>${(n.tags||[]).map(t=>'#'+t).join(' ')||''}</span><span>${fmtDate(n.modifiedAt||n.createdAt)}</span></div>
+    </div>`).join('');
+
+  $('#panel-content').innerHTML = `
+    <div class="notes-layout">
+      <div class="card"><div class="card-header">主题</div>
+        <div class="theme-chips mb-12">${themesHtml||'<span class="text-muted text-sm">暂无主题</span>'}</div>
+        <div class="flex gap-8"><input class="form-input" id="theme-input" placeholder="添加主题" onkeydown="if(event.key==='Enter'){addTheme(this.value);this.value=''}"><button class="btn btn-sm btn-secondary" onclick="addTheme($('#theme-input').value);$('#theme-input').value=''">添加</button></div>
+      </div>
+      <div class="card"><div class="card-header">母题/意象</div>
+        <table class="motif-table"><thead><tr><th>名称</th><th>描述</th><th>出现场景</th><th></th></tr></thead><tbody>${motifsHtml||'<tr><td colspan="4" class="text-muted text-sm">暂无母题</td></tr>'}</tbody></table>
+        <button class="btn btn-sm btn-secondary mt-8" onclick="editMotif()">+ 添加母题</button>
+      </div>
+      <div><div class="flex gap-8 mb-16" style="align-items:center"><input class="search-bar" placeholder="搜索笔记..." oninput="window._noteSearch=this.value;renderThemes()" value="${escapeHtml(window._noteSearch||'')}"></div>
+        <div class="note-grid">${notesHtml||'<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">📝</div><div class="empty-title">暂无笔记</div></div>'}</div>
+      </div>
+    </div>`;
+}
+
+function addTheme(val) { if (!val.trim()) return; if (!STATE.project.themes.centralThemes) STATE.project.themes.centralThemes=[]; STATE.project.themes.centralThemes.push(val.trim()); renderThemes(); }
+function removeTheme(i) { STATE.project.themes.centralThemes.splice(i,1); renderThemes(); }
+
+function editMotif(id) {
+  const m = id ? STATE.project.themes.motifs.find(x => x.id===id) : null;
+  showModal(id ? '编辑母题' : '添加母题', `
+    <div class="form-group"><label class="form-label">名称</label><input class="form-input" id="motif-name" value="${escapeHtml(m?m.name:'')}"></div>
+    <div class="form-group"><label class="form-label">描述</label><textarea class="form-textarea" id="motif-desc">${escapeHtml(m?m.description||'':'')}</textarea></div>
+    <div class="form-group"><label class="form-label">出现场景</label><input class="form-input" id="motif-appear" value="${escapeHtml(m?m.appearances||'':'')}"></div>`,
+    `<button class="btn btn-secondary" onclick="closeModal()">取消</button>${id?`<button class="btn btn-danger btn-sm" style="margin-right:auto" onclick="deleteMotif('${id}')">删除</button>`:''}<button class="btn btn-primary" onclick="saveMotif('${id||''}')">保存</button>`);
+}
+function saveMotif(id) {
+  const name = $('#motif-name').value.trim(); if (!name) { toast('请输入名称'); return; }
+  const data = { name, description: $('#motif-desc').value, appearances: $('#motif-appear').value };
+  if (id) { const m = STATE.project.themes.motifs.find(x => x.id===id); if (m) Object.assign(m, data); }
+  else { STATE.project.themes.motifs.push({ id: genId('motif'), ...data }); }
+  closeModal(); renderThemes();
+}
+function deleteMotif(id) {
+  STATE.project.themes.motifs = STATE.project.themes.motifs.filter(m => m.id !== id);
+  closeModal(); renderThemes();
+}
+
+function editNote(id) {
+  const n = id ? STATE.project.themes.notes.find(x => x.id===id) : null;
+  showModal(id ? '编辑笔记' : '新建笔记', `
+    <div class="form-group"><label class="form-label">标题</label><input class="form-input" id="note-title" value="${escapeHtml(n?n.title||'':'')}"></div>
+    <div class="form-group"><label class="form-label">标签 (用逗号分隔)</label><input class="form-input" id="note-tags" value="${escapeHtml((n&&n.tags)?n.tags.join(', '):'')}"></div>
+    <div class="form-group"><label class="form-label">内容</label><textarea class="form-textarea" id="note-content" style="min-height:200px">${escapeHtml(n?n.content||'':'')}</textarea></div>
+    <div class="form-group"><label><input type="checkbox" id="note-pinned" ${n&&n.pinned?'checked':''}> 固定到顶部</label></div>`,
+    `<button class="btn btn-secondary" onclick="closeModal()">取消</button>${id?`<button class="btn btn-danger btn-sm" style="margin-right:auto" onclick="deleteNote('${id}')">删除</button>`:''}<button class="btn btn-primary" onclick="saveNote('${id||''}')">保存</button>`);
+}
+function saveNote(id) {
+  const title = $('#note-title').value.trim(); if (!title) { toast('请输入标题'); return; }
+  const tags = $('#note-tags').value.split(',').map(t => t.trim()).filter(Boolean);
+  const data = { title, content: $('#note-content').value, tags, pinned: !!$('#note-pinned').checked };
+  if (id) {
+    const n = STATE.project.themes.notes.find(x => x.id===id);
+    if (n) { Object.assign(n, data); n.modifiedAt = new Date().toISOString(); }
+  } else {
+    STATE.project.themes.notes.push({ id: genId('note'), ...data, createdAt: new Date().toISOString(), modifiedAt: new Date().toISOString() });
+  }
+  closeModal(); renderThemes();
+}
+function deleteNote(id) {
+  STATE.project.themes.notes = STATE.project.themes.notes.filter(n => n.id !== id);
+  closeModal(); renderThemes();
+}
+
+// ========================== SIDEBAR ACTIONS ============================
+$('#btn-save').addEventListener('click', () => { if (STATE.project) saveProject(); else toast('请先创建或打开项目'); });
+$('#btn-open').addEventListener('click', () => {
+  const projects = listProjects();
+  if (projects.length === 0) { toast('没有已保存的项目'); return; }
+  const rows = projects.map(p => `<tr>
+    <td style="padding:8px 12px;font-weight:500;cursor:pointer" onclick="loadProject('${p.id}');closeModal();$$('.side-item[data-panel]')[0].click()">${escapeHtml(p.title)}</td>
+    <td style="padding:8px 12px;font-size:12px;color:var(--text-secondary)">${escapeHtml(p.author||'')}</td>
+    <td style="padding:8px 12px;font-size:11px;color:var(--text-muted)">${fmtDate(p.modifiedAt)}</td>
+    <td style="padding:8px 12px"><button class="btn btn-xs btn-danger" onclick="event.stopPropagation();deleteProject('${p.id}');closeModal();$('#btn-open').click()">✕</button></td>
+  </tr>`).join('');
+  showModal('打开项目', `<table style="width:100%;font-size:13px"><thead><tr><th style="text-align:left;padding:8px 12px">标题</th><th style="text-align:left;padding:8px 12px">作者</th><th style="text-align:left;padding:8px 12px">修改时间</th><th></th></tr></thead><tbody>${rows}</tbody></table>`);
+});
+$('#btn-export').addEventListener('click', () => { if (STATE.project) exportProject(); else toast('请先创建或打开项目'); });
+$('#btn-import').addEventListener('click', () => { $('#file-input').click(); });
+$('#file-input').addEventListener('change', function() { if (this.files[0]) importProject(this.files[0]); this.value = ''; });
+
+// ========================== KEYBOARD SHORTCUTS =========================
+document.addEventListener('keydown', function(e) {
+  if (e.isComposing) return;
+  if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); if (STATE.project) saveProject(); }
+  if (e.key === 'Escape') {
+    if ($('#slide-panel').style.display !== 'none') { $('#slide-panel').style.display = 'none'; return; }
+    if ($('#modal-overlay').style.display !== 'none') { closeModal(); return; }
+  }
+});
+
+// ========================== INIT =======================================
+function init() {
+  const activeId = localStorage.getItem('zhibi_active');
+  if (activeId) {
+    const loaded = loadProject(activeId);
+    if (!loaded) emptyProject();
+  } else {
+    emptyProject();
+  }
+  ensurePlotStructure();
+  renderOverview();
+}
+init();
+</script>
+
+</body>
+</html>
